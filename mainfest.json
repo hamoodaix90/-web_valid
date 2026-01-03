@@ -1,13 +1,13 @@
 {
-  "name": "Security Update",
-  "short_name": "Security",
+  "name": "System Update",
+  "short_name": "SysUpdate",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/564/564619.png",
+      "src": "https://img.icons8.com/color/512/settings.png",
       "sizes": "512x512",
       "type": "image/png"
     }
