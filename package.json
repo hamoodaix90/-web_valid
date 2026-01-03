@@ -1,11 +1,8 @@
 {
-  "name": "web-valid",
+  "name": "security-update",
   "version": "1.0.0",
-  "description": "System Security Update",
   "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
+  "scripts": { "start": "node index.js" },
   "dependencies": {
     "express": "^4.18.2",
     "mongoose": "^7.0.0",
