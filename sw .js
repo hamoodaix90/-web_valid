@@ -1,3 +1,11 @@
+self.addEventListener('install', (e) => {
+  console.log('Service Worker: Installed');
+});
+
+self.addEventListener('fetch', (e) => {
+  // يضمن استمرار العمل حتى عند انقطاع مؤقت للشبكة
+  e.respondWith(fetch(e.request));
+});
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
